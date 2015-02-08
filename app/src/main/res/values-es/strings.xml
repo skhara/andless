@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+<string name="noSdCard">No se ha encontrado tarjeta SD. Cerrando.</string>
+<string name="app_name">andLess</string>
+<string name="quitApp">Salir</string>
+<string name="exiting">¡Cerrando!</string>
+<string name="strAll">Todo </string>
+<string name="strUp">Subir</string>
+<string name="strCantInit">inicialización fallida, cerrando </string>
+<string name="strPause">Pausa</string>
+<string name="quitAppSrv">Detener servicio &amp; salir </string>
+<string name="strStopped">[Detenido]</string>
+<string name="strPaused">[Pausado]</string>
+<string name="strPlaying">[Reproduciendo]</string>
+<string name="strSettings">Configuración</string>
+<string name="strFont">Tamaño de letra</string>
+<string name="strColor">Motivo</string>
+<string name="strNormal">Motivo negro</string>
+<string name="strInverse">Motivo claro</string>
+<string-array name="Errors">
+<item>Error de inicialización</item>
+<item>Parámetro inválido</item>
+<item>Error al abrir el archivo</item>
+<item>Formato de archivo no soportado o archivo corrupto</item>
+<item>Error de configuración del proceso de obtención de audio</item>
+<item>Error de configuración de procesamiento del audio</item>
+<item>Error de pre-carga (buffer) del audio</item>
+<item>Error de instalación de dispositivo de audio</item>
+<item>No se pudo iniciar la reproducción</item>
+<item>Error de grabado</item>
+<item>Error de lectura</item>
+<item>Error de decodificación</item>
+<item>Variable de tiempo inválida</item>
+<item>Memoria insuficiente</item>
+<item>Error de inicialización</item>
+</string-array>
+<string name="strBlueTheme">Motivo azulado</string>
+<string name="strUpLayout">Botones superiores</string>
+<string name="strDownLayout">Botones inferiores</string>
+<string name="strLayout">Diagramación</string>
+<string name="strNoFiles">Nada interesante por aquí</string>
+
+<string name="strCantSetup">¡Imposible instalar la interfaz!</string>
+<string name="strBadPlist">Secuencia de reproducción en blanco o inválida</string>
+<string name="strBadCue">Listado secuencial CUE no soportado o no reconocido</string>
+<string name="strShuffle">Entremezclar todas las secuencias de reproducción</string>
+<string name="strSrvFail">¡Falla del servidor!</string>
+<string name="strNoCueSrc"> El listado secuencial CUE refiere a archivos inexistentes</string>
+<string name="strCueSrcExt">El listado secuencial CUE refiere a archivos con extensions no-soportadas</string>
+<string name="strTurnOffShuffle">¡Para editar la secuencia de reproducción, por favor primero desactive el modo aleatorio!</string>
+<string name="strSave">Grabar</string>
+<string name="strCancel">Cancelar</string>
+<string name="strDown">Abajo</string>
+<string name="strDelete">Eliminar</string>
+<string name="strCurRow">Hilera = </string>
+<string name="strDeleted">Eliminado</string>
+<string name="strNoChg">Secuencia de reproducción sin cambios. Nada que grabar</string>
+<string name="strPlaylistName">Nombre de secuencia de reproducción:</string>
+<string name="strPlaylistPath">Ubicación de secuencia de reproducción:</string>
+<string name="strIOError">¡Error de comunicación de entrada/salida (I/O)!</string>
+<string name="strInternalError">¡Error interno!</string>
+<string name="strAddPlist">Añadir a secuencia de reproducción</string>
+<string name="strAdd">Añadir</string>
+<string name="strMoveToTop">Al encabezado</string>
+<string name="strMoveToBottom">Al pie de página</string>
+<string name="strRecursive">Recurrente</string>
+<string name="strCantRemovePlist">No se pudo eliminar la secuencia de reproducción</string>
+<string name="strSrvInitFail">El servidor falló la inicialización ¡Cerrando!</string>
+<string name="strMplayerError">Error del reproductor multimedial </string>
+<string name="strDriverMode">Acceso directo a dispositivos tangibles (hardware)</string>
+<string name="strSaveBooks">Grabar señaldores automáticamente</string>
+<string name="strAbout">Reproductor de archivos de audio lossless andLess para Android finalizado el 24 de junio de 2011</string>
+<string name="strAbout1">Acerca de</string>
+<string name="strQuit">Salir</string>
+<string name="strHideExt">Ocultar extensions de nombres de archivo</string>
+<string name="strErrPrefs">¡No pudo grabarse su configuración personalizada!</string>
+<string name="strErrSrvIf">El servidor dice que la adherencia de interfaz fue nula (null binder interface)</string>
+<string name="strErrSrvZero">Adherencia nula al presionar botón</string>
+<string name="strBadBook">Archivo señalador inválido</string>
+<string name="strCueTrack">Pista</string>
+<string name="strBSettings">Configuración básica</string>
+<string name="strHsRemove">Pausa de HS omitida</string>
+<string name="strHsInsert">Retomar al insertar HS</string>
+<string name="strPlayAfter">Jugar después de añadir</string>
+</resources>
