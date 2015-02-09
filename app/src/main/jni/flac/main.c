@@ -597,7 +597,7 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
 	    return LIBLOSSLESS_ERR_NOFILE;
 	}
 
-    __android_log_print(ANDROID_LOG_INFO, "liblossless", "ctx mode: %d", ctx->mode);
+    __android_log_print(ANDROID_LOG_INFO, "liblossless", "flac ctx mode: %d", ctx->mode);
 
 	if(!flac_init(ctx->fd, fc, start, &seek_lo, &seek_hi)) {
 	    return LIBLOSSLESS_ERR_FORMAT;
