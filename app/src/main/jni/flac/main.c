@@ -559,7 +559,7 @@ JNIEXPORT jintArray JNICALL extract_flac_cue(JNIEnv *env, jobject obj, jstring j
 
 JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject obj, msm_ctx* ctx, jstring jfile, jint start) {
 
-    const char *file = (*env)->GetStringUTFChars(env,jfile,NULL);
+    const char *file = (*env)->GetStringUTFChars(env, jfile, NULL);
     int i = 0, n, scale;
     int bytesleft = 0, bytes_to_write = 0, consumed = 0;
     unsigned char buf[MAX_FRAMESIZE];
@@ -572,24 +572,30 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
     int prev_written = 0;
     flac_seek_t seek_lo, seek_hi;
     int obps; 
+
 #ifdef DBG_TIME
 	uint64_t total_tminwrite = 0, total_ttmp = 0, total_sleep = 0;
 	int writes = 0, fails = 0;	
 #endif
 
-
-	if(!ctx) return LIBLOSSLESS_ERR_NOCTX;
+	if(!ctx) {
+	    return LIBLOSSLESS_ERR_NOCTX;
+	}
 		
 	if(!file) {
-		(*env)->ReleaseStringUTFChars(env,jfile,file); 	return LIBLOSSLESS_ERR_INV_PARM;
+		(*env)->ReleaseStringUTFChars(env, jfile, file);
+        return LIBLOSSLESS_ERR_INV_PARM;
 	}
+
 	audio_stop(ctx);
 
-	ctx->fd = open(file,O_RDONLY);
-	(*env)->ReleaseStringUTFChars(env,jfile,file);
+	ctx->fd = open(file, O_RDONLY);
 
-	if(ctx->fd < 0) return LIBLOSSLESS_ERR_NOFILE;
+	(*env)->ReleaseStringUTFChars(env, jfile, file);
 
+	if(ctx->fd < 0) {
+	    return LIBLOSSLESS_ERR_NOFILE;
+	}
 
 //  __android_log_print(ANDROID_LOG_INFO,"liblossless","calling flac_init()");
 
@@ -612,35 +618,46 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
 	}
 	__android_log_print(ANDROID_LOG_INFO,"liblossless","FLAC is %d bps", fc->bps);
 
-        ctx->channels = fc->channels;
-        ctx->samplerate = fc->samplerate;
-        ctx->bps = fc->bps;
-        ctx->written = 0;
-	pthread_mutex_lock(&ctx->mutex);
-	ctx->state = MSM_PLAYING;
-	ctx->track_time = fc->totalsamples / fc->samplerate;
-	pthread_mutex_unlock(&ctx->mutex);
-	obps = (fc->bps == 24) ? 16:fc->bps;
-	update_track_time(env,obj,ctx->track_time); 
- 
+    ctx->channels = fc->channels;
+    ctx->samplerate = fc->samplerate;
+    ctx->bps = fc->bps;
+    ctx->written = 0;
 
-	bytesleft = read(ctx->fd,buf,sizeof(buf));
+	pthread_mutex_lock(&ctx->mutex);
+        ctx->state = MSM_PLAYING;
+        ctx->track_time = fc->totalsamples / fc->samplerate;
+	pthread_mutex_unlock(&ctx->mutex);
+
+	obps = (fc->bps == 24) ? 16:fc->bps;
+	update_track_time(env, obj, ctx->track_time);
+
+	bytesleft = read(ctx->fd, buf, sizeof(buf));
 //        gettimeofday(&tstart,0);
    	
     while (bytesleft && (ctx->state != MSM_STOPPED)) 
-    { 
-	if(flac_decode_frame(fc,decoded0,decoded1,buf,bytesleft,yield) < 0) {
-               if(ctx->state != MSM_STOPPED) {
-                    if(ctx->state != MSM_PAUSED) pthread_mutex_lock(&ctx->mutex);
+    {
+        if(flac_decode_frame(fc, decoded0, decoded1, buf, bytesleft, yield) < 0) {
+
+            if(ctx->state != MSM_STOPPED) {
+
+                if(ctx->state != MSM_PAUSED) pthread_mutex_lock(&ctx->mutex);
                     ctx->state = MSM_STOPPED;
                     pthread_mutex_unlock(&ctx->mutex);
                 }
-                if(ctx->fd == -1) return 0; // we were stopped from the main thread
-		if(ctx->written/(ctx->channels * ctx->samplerate * (obps/8))+2 > ctx->track_time) break;
-                close(ctx->fd); ctx->fd = -1;
-		return LIBLOSSLESS_ERR_DECODE;
-	}
-	consumed = fc->gb.index/8;
+                if(ctx->fd == -1) {
+                    return 0; // we were stopped from the main thread
+                }
+
+            if(ctx->written/(ctx->channels * ctx->samplerate * (obps/8))+2 > ctx->track_time) {
+                break;
+            }
+
+            close(ctx->fd);
+            ctx->fd = -1;
+            return LIBLOSSLESS_ERR_DECODE;
+        }
+
+	    consumed = fc->gb.index / 8;
         scale = FLAC_OUTPUT_DEPTH - fc->bps;
 
         p = ctx->wavbuf + bytes_to_write;
@@ -648,116 +665,167 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
         for (i=0; i < fc->blocksize; i++) {
              /* Left sample */
              decoded0[i] = decoded0[i]>>scale;
+
              if (fc->bps == 24) {
-        	 *(p++) = (decoded0[i]&0xff00)>>8;
-		 *(p++)=(decoded0[i]&0xff0000)>>16; 
-	     } else {	
-	         *(p++) = decoded0[i]&0xff;
-        	 *(p++) = (decoded0[i]&0xff00)>>8;
-	     }	 	
+        	    *(p++) = (decoded0[i]&0xff00)>>8;
+		        *(p++)=(decoded0[i]&0xff0000)>>16;
+             } else {
+                 *(p++) = decoded0[i]&0xff;
+                 *(p++) = (decoded0[i]&0xff00)>>8;
+             }
+
              if (fc->channels == 2) {
                  /* Right sample */
                  decoded1[i]=decoded1[i]>>scale;
                  if (fc->bps==24) {
-        	 	 *(p++) = (decoded1[i]&0xff00)>>8;
-			 *(p++)=(decoded1[i]&0xff0000)>>16;
-		 } else {
+        	 	    *(p++) = (decoded1[i]&0xff00)>>8;
+			        *(p++)=(decoded1[i]&0xff0000)>>16;
+		        } else {
 	                 *(p++)=decoded1[i]&0xff;
-	        	 *(p++) = (decoded1[i]&0xff00)>>8;
-		 }
+	        	     *(p++) = (decoded1[i]&0xff00)>>8;
+		        }
              }
         }
 
         n = fc->blocksize * fc->channels * (obps/8);
 
-	if(n + bytes_to_write >= ctx->conf_size) {
-	    p = ctx->wavbuf; n += bytes_to_write;	
+	    if(n + bytes_to_write >= ctx->conf_size) {
+	        p = ctx->wavbuf; n += bytes_to_write;
 
-	    if(prev_written && ctx->mode != MODE_CALLBACK) {	
-		tminwrite = ((uint64_t)((uint64_t)(prev_written))*1000000)/((uint64_t)(fc->samplerate*fc->channels*(obps/8)));
-	        gettimeofday(&tstop,0);
-		timersub(&tstop,&tstart,&ttmp);
-		if(tminwrite > ttmp.tv_usec) {
-			usleep((tminwrite-ttmp.tv_usec)/4);
+	        if(prev_written && ctx->mode != MODE_CALLBACK) {
+		        tminwrite = ((uint64_t)((uint64_t)(prev_written))*1000000)/((uint64_t)(fc->samplerate*fc->channels*(obps/8)));
+	            gettimeofday(&tstop,0);
+		        timersub(&tstop,&tstart,&ttmp);
+		        if(tminwrite > ttmp.tv_usec) {
+			        usleep((tminwrite-ttmp.tv_usec) / 4);
 #ifdef DBG_TIME
-			total_sleep += (tminwrite - ttmp.tv_usec)/4;
+			        total_sleep += (tminwrite - ttmp.tv_usec) / 4;
 #endif
-		}
+		        }
 #ifdef DBG_TIME
-  	        else fails++;
-	        writes++;
-        	total_tminwrite += tminwrite;
-		total_ttmp += ttmp.tv_usec;
-#endif
-	    }	
-	    if(ctx->mode != MODE_CALLBACK) gettimeofday(&tstart,0);
-	    prev_written = 0; 		    	
-	    do {
-		pthread_mutex_lock(&ctx->mutex);
-		i = audio_write(ctx,p,ctx->conf_size);
-		if(i < ctx->conf_size) {
-		    ctx->state = MSM_STOPPED;	
-		    pthread_mutex_unlock(&ctx->mutex);
-		    if(ctx->fd == -1) {
-#ifdef DBG_TIME
-        if(writes && (writes > fails)) {
-           int x = (int) (total_tminwrite/writes);
-           int y = (int) (total_ttmp/writes);
-	   int z = (int) (total_sleep/(writes-fails));	
-            __android_log_print(ANDROID_LOG_INFO,"liblossless","tminwrite %d ttmp %d sleep %d fails %d writes %d", x,y,z,fails,writes);
-        } else __android_log_print(ANDROID_LOG_INFO,"liblossless","fails %d writes %d", fails,writes);
-#endif
-			return 0; // we were stopped from the main thread
-		    }		
-		    close(ctx->fd); ctx->fd = -1;
-	            return LIBLOSSLESS_ERR_IO_WRITE;
-		}
-		pthread_mutex_unlock(&ctx->mutex);
-		n -= ctx->conf_size;
-		p += ctx->conf_size;
-		prev_written += ctx->conf_size;
-		ctx->written += i;
-	    } while(n >= ctx->conf_size);
-	    memmove(ctx->wavbuf,p,n);
-	    bytes_to_write = n;
-	} else bytes_to_write += n;
+                else {
+                    fails++;
+                }
 
-        memmove(buf,&buf[consumed],bytesleft-consumed);
+                writes++;
+                total_tminwrite += tminwrite;
+                total_ttmp += ttmp.tv_usec;
+#endif
+	        }
+
+	        if(ctx->mode != MODE_CALLBACK) {
+	            gettimeofday(&tstart,0);
+	        }
+
+	        prev_written = 0;
+
+	        do {
+                pthread_mutex_lock(&ctx->mutex);
+
+                i = audio_write(ctx, p, ctx->conf_size);
+
+		        if(i < ctx->conf_size) {
+		            ctx->state = MSM_STOPPED;
+		            pthread_mutex_unlock(&ctx->mutex);
+
+		            if(ctx->fd == -1) {
+#ifdef DBG_TIME
+                        if(writes && (writes > fails)) {
+                            int x = (int) (total_tminwrite/writes);
+                            int y = (int) (total_ttmp/writes);
+	                        int z = (int) (total_sleep/(writes-fails));
+                            __android_log_print(
+                                ANDROID_LOG_INFO,
+                                "liblossless", "tminwrite %d ttmp %d sleep %d fails %d writes %d",
+                                x, y, z, fails, writes);
+
+                        } else {
+                            __android_log_print(
+                            ANDROID_LOG_INFO,
+                            "liblossless","fails %d writes %d",
+                            fails,writes);
+                        }
+
+#endif
+                        return 0; // we were stopped from the main thread
+                    }
+
+		            close(ctx->fd);
+		            ctx->fd = -1;
+
+	                return LIBLOSSLESS_ERR_IO_WRITE;
+		        }
+
+		        pthread_mutex_unlock(&ctx->mutex);
+
+		        n -= ctx->conf_size;
+		        p += ctx->conf_size;
+		        prev_written += ctx->conf_size;
+		        ctx->written += i;
+
+	        } while(n >= ctx->conf_size);
+
+	        memmove(ctx->wavbuf, p, n);
+	        bytes_to_write = n;
+
+	    } else {
+	        bytes_to_write += n;
+	    }
+
+        memmove(buf, &buf[consumed], bytesleft - consumed);
+
         bytesleft -= consumed;
 
-        n = read(ctx->fd,&buf[bytesleft],sizeof(buf)-bytesleft);
-        if (n > 0) bytesleft+=n;
-	else if(n < 0) {
-		if(ctx->state != MSM_STOPPED) {
-		    if(ctx->state != MSM_PAUSED) pthread_mutex_lock(&ctx->mutex);
-		    ctx->state = MSM_STOPPED;
-		    pthread_mutex_unlock(&ctx->mutex);
-		}
-		if(ctx->fd == -1) return 0; // we were stopped from the main thread	
-		close(ctx->fd); ctx->fd = -1;
-	        return LIBLOSSLESS_ERR_IO_READ;
-	}
+        n = read(ctx->fd, &buf[bytesleft], sizeof(buf) - bytesleft);
+        if (n > 0) {
+            bytesleft += n;
+        } else if(n < 0) {
+		    if(ctx->state != MSM_STOPPED) {
+		        if(ctx->state != MSM_PAUSED) {
+		            pthread_mutex_lock(&ctx->mutex);
+		        }
+                ctx->state = MSM_STOPPED;
+                pthread_mutex_unlock(&ctx->mutex);
+		    }
+            if(ctx->fd == -1) {
+                return 0; // we were stopped from the main thread
+            }
+
+            close(ctx->fd);
+            ctx->fd = -1;
+
+            return LIBLOSSLESS_ERR_IO_READ;
+	    }
 	
 //	if(ctx->state != MSM_STOPPED) sched_yield();
     } 
 
     if(ctx->state != MSM_STOPPED) {
-	if(ctx->state != MSM_PAUSED) pthread_mutex_lock(&ctx->mutex);
-	if(ctx->fd != -1) {
-		close(ctx->fd); ctx->fd = -1;
-	}	
-	ctx->state = MSM_STOPPED;	
-	pthread_mutex_unlock(&ctx->mutex);
+	    if(ctx->state != MSM_PAUSED) {
+	        pthread_mutex_lock(&ctx->mutex);
+	    }
+
+	    if(ctx->fd != -1) {
+		    close(ctx->fd); ctx->fd = -1;
+	    }
+        ctx->state = MSM_STOPPED;
+        pthread_mutex_unlock(&ctx->mutex);
     }
 
 #ifdef DBG_TIME
-        if(writes && (writes > fails)) {
-           int x = (int) (total_tminwrite/writes);
-           int y = (int) (total_ttmp/writes);
-           int z = (int) (total_sleep/(writes-fails));
-            __android_log_print(ANDROID_LOG_INFO,"liblossless","tminwrite %d ttmp %d sleep %d fails %d writes %d", x,y,z,fails,writes);
-        } else __android_log_print(ANDROID_LOG_INFO,"liblossless","fails %d writes %d", fails,writes);
+    if(writes && (writes > fails)) {
+        int x = (int) (total_tminwrite/writes);
+        int y = (int) (total_ttmp/writes);
+        int z = (int) (total_sleep/(writes-fails));
+        __android_log_print(
+            ANDROID_LOG_INFO,
+            "liblossless", "tminwrite %d ttmp %d sleep %d fails %d writes %d",
+            x, y, z, fails, writes);
+    } else {
+        __android_log_print(ANDROID_LOG_INFO,"liblossless","fails %d writes %d", fails,writes);
+    }
 #endif
-      audio_wait_done(ctx);		
+
+    audio_wait_done(ctx);
     return 0;
 }
