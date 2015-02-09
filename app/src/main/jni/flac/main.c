@@ -597,9 +597,11 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
 	    return LIBLOSSLESS_ERR_NOFILE;
 	}
 
-//  __android_log_print(ANDROID_LOG_INFO,"liblossless","calling flac_init()");
+    __android_log_print(ANDROID_LOG_INFO, "liblossless", "ctx mode: %d", ctx->mode);
 
-	if(!flac_init(ctx->fd,fc,start,&seek_lo,&seek_hi)) return LIBLOSSLESS_ERR_FORMAT;
+	if(!flac_init(ctx->fd, fc, start, &seek_lo, &seek_hi)) {
+	    return LIBLOSSLESS_ERR_FORMAT;
+	}
   
 //  __android_log_print(ANDROID_LOG_INFO,"liblossless","flac_init() exited, calling flac_seek()");
 
@@ -687,17 +689,22 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
              }
         }
 
-        n = fc->blocksize * fc->channels * (obps/8);
+        n = fc->blocksize * fc->channels * (obps / 8);
 
 	    if(n + bytes_to_write >= ctx->conf_size) {
 	        p = ctx->wavbuf; n += bytes_to_write;
 
 	        if(prev_written && ctx->mode != MODE_CALLBACK) {
-		        tminwrite = ((uint64_t)((uint64_t)(prev_written))*1000000)/((uint64_t)(fc->samplerate*fc->channels*(obps/8)));
-	            gettimeofday(&tstop,0);
-		        timersub(&tstop,&tstart,&ttmp);
+		        tminwrite = ((uint64_t)((uint64_t)(prev_written)) * 1000000) /
+		            ((uint64_t)(fc->samplerate * fc->channels*(obps / 8)));
+
+	            gettimeofday(&tstop, 0);
+
+		        timersub(&tstop, &tstart, &ttmp);
+
 		        if(tminwrite > ttmp.tv_usec) {
-			        usleep((tminwrite-ttmp.tv_usec) / 4);
+
+			        usleep((tminwrite - ttmp.tv_usec) / 4);
 #ifdef DBG_TIME
 			        total_sleep += (tminwrite - ttmp.tv_usec) / 4;
 #endif
@@ -714,7 +721,7 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
 	        }
 
 	        if(ctx->mode != MODE_CALLBACK) {
-	            gettimeofday(&tstart,0);
+	            gettimeofday(&tstart, 0);
 	        }
 
 	        prev_written = 0;
@@ -722,7 +729,9 @@ JNIEXPORT jint JNICALL Java_net_avs234_AndLessSrv_flacPlay(JNIEnv *env, jobject 
 	        do {
                 pthread_mutex_lock(&ctx->mutex);
 
+                __android_log_print(ANDROID_LOG_INFO,"liblossless","start audio_write");
                 i = audio_write(ctx, p, ctx->conf_size);
+                __android_log_print(ANDROID_LOG_INFO,"liblossless","stop audio_write");
 
 		        if(i < ctx->conf_size) {
 		            ctx->state = MSM_STOPPED;
